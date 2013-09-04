@@ -23,6 +23,17 @@ abstract class XliffConverter
         }
         file_put_contents($targetFilePath, $doc->saveXML());
     }
+
+    protected function setNodeValue(DOMElement $node, $value)
+    {
+        $value = trim($value);
+        if (strpos($value, '<') !== false || strpos($value, '>') !== false) {
+            $node->nodeValue = '';
+            $node->appendChild($node->ownerDocument->createCDATASection($value));
+        } else {
+            $node->nodeValue = $value;
+        }
+    }
 }
 
 class ExportXliffConverter extends XliffConverter
@@ -35,7 +46,7 @@ class ExportXliffConverter extends XliffConverter
         $target = $node->getElementsByTagName('target')->item(0);
 
         $node->attributes->getNamedItem('id')->nodeValue = $source->nodeValue;
-        $source->nodeValue = $target->nodeValue;
+        $this->setNodeValue($source, $target->nodeValue);
         $target->nodeValue = ' ';
     }
 }
@@ -48,7 +59,12 @@ class ImportXliffConverter extends XliffConverter
         $source = $node->getElementsByTagName('source')->item(0);
         $id = $node->attributes->getNamedItem('id');
         $source->nodeValue = $id->nodeValue;
+
+        $target = $node->getElementsByTagName('target')->item(0);
+        $this->setNodeValue($target, $target->nodeValue);
     }
+
+
 }
 
 $options = getopt("a:i:o:");
